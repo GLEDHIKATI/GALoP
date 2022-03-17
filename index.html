@@ -49,7 +49,8 @@
             "esri/layers/ElevationLayer",
             "esri/widgets/ElevationProfile",
             "esri/widgets/BasemapGallery",
-            "esri/widgets/LayerList"
+            "esri/widgets/LayerList",
+            "esri/layers/ImageryTileLayer"
 
         ], function (
             esriConfig,
@@ -64,7 +65,8 @@
             ElevationLayer,
             ElevationProfile,
             BasemapGallery,
-            LayerList) {
+            LayerList,
+            ImageryTileLayer) {
 
 
             esriConfig.apiKey = "AAPK4020afb03be14a5895efef2fc31206b4RV2AL6qIwgJmAhDYrvpWGPSe-NCkjadws2bzUxQqygfLlASr13Ma26SlE1O7aIJz";
@@ -86,7 +88,7 @@
                 title: "Vector Topographic",
                 id: "vectortopographicbasemap"
             });
-            // this is the additional basemap code
+
             const linzTopoLayer = new TileLayer({
                 portalItem: {
                     id: "85027f060e2b47249a508ada6f44403d" // NZ LINZ Topographic
@@ -112,86 +114,92 @@
                 id: "imagerybasemap"
             });
 
-
-        });
-
-        const vectorTileLayer = new VectorTileLayer({
-            portalItem: {
-                id: "734c12e9904b4a8086d2dff8582a93a1" // NZ
-            },
-            opacity: .75
-        });
-
-        const imageTileLayer = new TileLayer({
-            portalItem: {
-                id: "38c860f8dbd24820b2a59ccc9a3dabdb" // NZ Hillshade
-            }
-        });
-
-        const basemap = new Basemap({
-            baseLayers: [
-
-                imageTileLayer,
-                vectorTileLayer
-
-            ]
-        });
-
-        const popupTrailheads = {
-            "content": "<img src={introductionThumbnail} /><br />" +
-                "<h1>{name}</h1><i>{place}, {region}</i><br /><br />" +
-                "<b>Facilities:</b> {facilities}<br />" +
-                "<b>Status:</b> {status}<br />" +
-                "<b>Bookable:</b> {bookable}<br />" +
-                "<a href='{staticLink}'>More Info</a>"
-        }
-
-        const labelHuts = {
-            // autocasts as new LabelClass()
-            symbol: {
-                type: "text", // autocasts as new TextSymbol()
-                color: [43, 43, 43, 255],
-                font: {
-                    // autocast as new Font()
-                    weight: "bold"
+            const vectorTileLayer = new VectorTileLayer({
+                portalItem: {
+                    id: "734c12e9904b4a8086d2dff8582a93a1" // NZ
                 },
-                haloSize: 1,
-                haloColor: "white"
+                opacity: .75
+            });
+
+            const imageTileLayer = new TileLayer({
+                portalItem: {
+                    id: "38c860f8dbd24820b2a59ccc9a3dabdb" // NZ Hillshade
+                }
+            });
+
+            const basemap = new Basemap({
+                baseLayers: [
+
+                    imageTileLayer,
+                    vectorTileLayer
+
+                ]
+            });
+
+            const popupTrailheads = {
+                "content": "<img src={introductionThumbnail} /><br />" +
+                    "<h1>{name}</h1><i>{place}, {region}</i><br /><br />" +
+                    "<b>Facilities:</b> {facilities}<br />" +
+                    "<b>Status:</b> {status}<br />" +
+                    "<b>Bookable:</b> {bookable}<br />" +
+                    "<a href='{staticLink}'>More Info</a>"
+            }
+
+            const labelHuts = {
+                // autocasts as new LabelClass()
+                symbol: {
+                    type: "text", // autocasts as new TextSymbol()
+                    color: [43, 43, 43, 255],
+                    font: {
+                        // autocast as new Font()
+                        weight: "bold"
+                    },
+                    haloSize: 1,
+                    haloColor: "white"
+                },
+                labelPlacement: "below-center",
+                labelExpressionInfo: {
+                    expression: "$feature.name"
+                }
+            };
+
+            const trailsLayer = new FeatureLayer({
+                url: "https://services1.arcgis.com/3JjYDyG3oajxU6HO/arcgis/rest/services/DOC_Tracks/FeatureServer",
+                popupTemplate: popupTrailheads,
+                renderer: trailsRenderer
+            });
+
+            const hutsLayer = new FeatureLayer({
+                url: "https://services1.arcgis.com/3JjYDyG3oajxU6HO/arcgis/rest/services/DOC_Huts/FeatureServer",
+                labelingInfo: [labelHuts],
+                renderer: hutsRenderer
+            });
+
+            const elevationLayer = new ElevationLayer({
+                portalItem: {
+                    id: "2ce4fe7d77024e719f8a04d2155b3fd2"
+                }
+
+            });
+
+            const windForecast = new ImageryTileLayer({
+                url: "https://tiledimageservices.arcgis.com/hLRlshaEMEYQG5A8/arcgis/rest/services/vector_field_layer/ImageServer", 
+                title: "Wind",
+                renderer: {
+                type: "animated-flow", // autocasts to new AnimatedFlowRenderer
+                lineWidth: "1px",
+                lineColor: [50, 120, 240, 0.3],
+                density: 0.5,
             },
-            labelPlacement: "below-center",
-            labelExpressionInfo: {
-                expression: "$feature.name"
-            }
-        };
-
-        const trailsLayer = new FeatureLayer({
-            url: "https://services1.arcgis.com/3JjYDyG3oajxU6HO/arcgis/rest/services/DOC_Tracks/FeatureServer",
-            popupTemplate: popupTrailheads,
-            renderer: trailsRenderer
+            effect: "bloom(2, 0.25px, 0)",
         });
-
-        const hutLayer = new FeatureLayer({
-            url: "https://services1.arcgis.com/3JjYDyG3oajxU6HO/arcgis/rest/services/DOC_Huts/FeatureServer",
-            labelingInfo: [labelHuts],
-            renderer: hutsRenderer
-        });
-
-        const elevationLayer = new ElevationLayer({
-            portalItem: {
-                id: "2ce4fe7d77024e719f8a04d2155b3fd2"
-            }
-        });
-
-
         const map = new Map({
             basemap: topoBasemap,
-            layers: [trailsLayer, hutsLayer],
+            layers: [trailsLayer, hutsLayer, windForecast],
             ground: {
                 layers: [elevationLayer]
             }
         });
-
-
 
         const view = new MapView({
             map: map,
@@ -238,7 +246,7 @@
             view.ui.add(layerList, "top-right");
         });
 
-
+    });
 
     </script>
 </head>
