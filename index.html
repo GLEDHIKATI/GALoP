@@ -1,0 +1,250 @@
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <title>ArcGIS API for JavaScript Tutorials: Display a map</title>
+
+    <style>
+        html,
+        body,
+        #viewDiv {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            width: 100%;
+        }
+
+        .esri-elevation-profile.esri-component.esri-widget--panel {
+            margin-left: auto;
+            margin-right: auto;
+            position: absolute !important;
+            bottom: 20;
+            left: 0;
+            right: 0;
+            width: 90% !important;
+            padding-left: 20 !important;
+            padding-right: 20 !important;
+
+        }
+    </style>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.22/esri/themes/light/main.css">
+    <script src="https://js.arcgis.com/4.22/"></script>
+    <script src="render.js"></script>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.22/esri/themes/light/main.css">
+    <script src="https://js.arcgis.com/4.22/"></script>
+
+
+    <script>
+        require([
+            "esri/config",
+            "esri/Map",
+            "esri/views/MapView",
+            "esri/Basemap",
+            "esri/layers/VectorTileLayer",
+            "esri/layers/TileLayer",
+            "esri/geometry/Point",
+            "esri/layers/FeatureLayer",
+            "esri/widgets/Locate",
+            "esri/layers/ElevationLayer",
+            "esri/widgets/ElevationProfile",
+            "esri/widgets/BasemapGallery",
+            "esri/widgets/LayerList"
+
+        ], function (
+            esriConfig,
+            Map,
+            MapView,
+            Basemap,
+            VectorTileLayer,
+            TileLayer,
+            Point,
+            FeatureLayer,
+            Locate,
+            ElevationLayer,
+            ElevationProfile,
+            BasemapGallery,
+            LayerList) {
+
+
+            esriConfig.apiKey = "AAPK4020afb03be14a5895efef2fc31206b4RV2AL6qIwgJmAhDYrvpWGPSe-NCkjadws2bzUxQqygfLlASr13Ma26SlE1O7aIJz";
+            const topoLayer = new VectorTileLayer({
+                portalItem: {
+                    id: "734c12e9904b4a8086d2dff8582a93a1" // NZ Topo Relief (Eagle)
+                }
+            });
+            const hillshadeLayer = new TileLayer({
+                portalItem: {
+                    id: "38c860f8dbd24820b2a59ccc9a3dabdb" // NZ Alpha Hillshade (Eagle)
+                }
+            });
+            const topoBasemap = new Basemap({
+                baseLayers: [
+                    hillshadeLayer,
+                    topoLayer
+                ],
+                title: "Vector Topographic",
+                id: "vectortopographicbasemap"
+            });
+            // this is the additional basemap code
+            const linzTopoLayer = new TileLayer({
+                portalItem: {
+                    id: "85027f060e2b47249a508ada6f44403d" // NZ LINZ Topographic
+                },
+            });
+            const linzBasemap = new Basemap({
+                baseLayers: [
+                    linzTopoLayer
+                ],
+                title: "LINZ Topographic",
+                id: "linzbasemap"
+            });
+            const imageryLayer = new TileLayer({
+                portalItem: {
+                    id: "d284729222d04a3cb548cfe27716ea43" // NZ imagery
+                }
+            });
+            const imageryBasemap = new Basemap({
+                baseLayers: [
+                    imageryLayer
+                ],
+                title: "Imagery",
+                id: "imagerybasemap"
+            });
+
+
+        });
+
+        const vectorTileLayer = new VectorTileLayer({
+            portalItem: {
+                id: "734c12e9904b4a8086d2dff8582a93a1" // NZ
+            },
+            opacity: .75
+        });
+
+        const imageTileLayer = new TileLayer({
+            portalItem: {
+                id: "38c860f8dbd24820b2a59ccc9a3dabdb" // NZ Hillshade
+            }
+        });
+
+        const basemap = new Basemap({
+            baseLayers: [
+
+                imageTileLayer,
+                vectorTileLayer
+
+            ]
+        });
+
+        const popupTrailheads = {
+            "content": "<img src={introductionThumbnail} /><br />" +
+                "<h1>{name}</h1><i>{place}, {region}</i><br /><br />" +
+                "<b>Facilities:</b> {facilities}<br />" +
+                "<b>Status:</b> {status}<br />" +
+                "<b>Bookable:</b> {bookable}<br />" +
+                "<a href='{staticLink}'>More Info</a>"
+        }
+
+        const labelHuts = {
+            // autocasts as new LabelClass()
+            symbol: {
+                type: "text", // autocasts as new TextSymbol()
+                color: [43, 43, 43, 255],
+                font: {
+                    // autocast as new Font()
+                    weight: "bold"
+                },
+                haloSize: 1,
+                haloColor: "white"
+            },
+            labelPlacement: "below-center",
+            labelExpressionInfo: {
+                expression: "$feature.name"
+            }
+        };
+
+        const trailsLayer = new FeatureLayer({
+            url: "https://services1.arcgis.com/3JjYDyG3oajxU6HO/arcgis/rest/services/DOC_Tracks/FeatureServer",
+            popupTemplate: popupTrailheads,
+            renderer: trailsRenderer
+        });
+
+        const hutLayer = new FeatureLayer({
+            url: "https://services1.arcgis.com/3JjYDyG3oajxU6HO/arcgis/rest/services/DOC_Huts/FeatureServer",
+            labelingInfo: [labelHuts],
+            renderer: hutsRenderer
+        });
+
+        const elevationLayer = new ElevationLayer({
+            portalItem: {
+                id: "2ce4fe7d77024e719f8a04d2155b3fd2"
+            }
+        });
+
+
+        const map = new Map({
+            basemap: topoBasemap,
+            layers: [trailsLayer, hutsLayer],
+            ground: {
+                layers: [elevationLayer]
+            }
+        });
+
+
+
+        const view = new MapView({
+            map: map,
+            center: new Point({ x: 1795999, y: 5457405, spatialReference: { wkid: 2193 } }), // nztm coordinates
+            zoom: 7, // Zoom level
+            container: "viewDiv", // Div element
+
+        }
+        );
+
+        const elevationProfile = new ElevationProfile({
+            view: view,
+            profiles: [{ type: "ground" }]
+        });
+        view.when(function () {
+            view.ui.add(elevationProfile);
+        });
+
+        const locate = new Locate({
+            view: view,
+            useHeadingEnabled: false,
+            goToOverride: function (view, options) {
+
+            }
+
+        });
+
+        view.ui.add(locate, "top-left");
+
+        view.popup.defaultPopupTemplateEnabled = true;
+
+        const basemapGallery = new BasemapGallery({
+            view: view,
+            source: [topoBasemap, linzBasemap, imageryBasemap]
+        });
+        view.ui.add(basemapGallery, "top-right");
+
+        view.when(() => {
+            const layerList = new LayerList({
+                view: view
+            });
+
+            // Add widget to the top right corner of the view
+            view.ui.add(layerList, "top-right");
+        });
+
+
+
+    </script>
+</head>
+
+<body>
+    <div id="viewDiv"></div>
+</body>
+
+</html>
